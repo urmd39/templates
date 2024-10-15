@@ -3,7 +3,6 @@ package infrastructure
 import (
 	"log"
 	"os"
-	"time"
 )
 
 const (
@@ -25,7 +24,7 @@ const (
 	DB_POSTGRES_USERNAME = "DB_POSTGRES_USERNAME"
 	DB_POSTGRES_PASSWORD = "DB_POSTGRES_PASSWORD"
 	DB_POSTGRES_SSL_MODE = "DB_POSTGRES_SSL_MODE"
-	INITDB               = "INIT_DB"
+	INIT_DB              = "INIT_DB"
 
 	// Database Mongo
 	DB_MONGO_HOST_PORT        = "DB_MONGO_HOST_PORT"
@@ -61,8 +60,6 @@ const (
 	SPACES_EXCEL_FOLDER = "SPACES_EXCEL_FOLDER"
 	EXCELSTORAGEPATH    = "EXCEL_STORAGE_PATH"
 	EXCELDOMAIN         = "EXCEL_DOMAIN"
-
-	VietNamTimeZone = "Asia/Vientiane"
 )
 
 var (
@@ -120,9 +117,6 @@ var (
 	ExcelStoragePath string
 	ExcelDomain      string
 	DOSpaceConn      DOSpaceConnection
-
-	// Setting
-	VNLocation *time.Location
 )
 
 func getStringEnvParameter(envParam string, defaultValue string) string {
@@ -156,7 +150,7 @@ func loadEnvParameters() {
 	DBPostgresUsername = getStringEnvParameter(DB_POSTGRES_USERNAME, "")
 	DBPostgresPassword = getStringEnvParameter(DB_POSTGRES_PASSWORD, "")
 	DBPostgresSSLMode = getStringEnvParameter(DB_POSTGRES_SSL_MODE, "disable")
-	DBInitDB = getStringEnvParameter(INITDB, "true")
+	DBInitDB = getStringEnvParameter(INIT_DB, "true")
 
 	// Mongo
 	DBMongoHostPort = getStringEnvParameter(DB_MONGO_HOST_PORT, "")

@@ -10,6 +10,7 @@ import (
 
 var (
 	NATSConnection EventPublisher
+	VNLocation     *time.Location
 )
 
 func init() {
