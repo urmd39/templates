@@ -1,7 +1,6 @@
 package api
 
 import (
-	"templates/controller"
 	"templates/middleware"
 
 	chi "github.com/go-chi/chi/v5"
@@ -9,7 +8,7 @@ import (
 
 func NewApiRouter(subR chi.Router) {
 	authorizer := middleware.NewAuthentication()
-	demoController := controller.NewDemoController()
+	// demoController := controller.NewDemoController()
 
 	// Private routes
 	subR.Group(func(r chi.Router) {
