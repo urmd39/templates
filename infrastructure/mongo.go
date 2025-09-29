@@ -4,77 +4,86 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"log"
-	"os"
+	"io/ioutil"
 	"runtime"
 	"sync"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type MongoDBStore struct {
-	Db      *mongo.Database
-	Session *mongo.Client
+	Database *mongo.Database
+	Client   *mongo.Client
 }
 
-func NewDatastore(caFile string, certificateFile string, privateKeyFile string, dbAuthMechanism string, replication string) *MongoDBStore {
+func NewDBStore() *MongoDBStore {
 	var mongoDBStore *MongoDBStore
-	db, session := connectMongoDatabase(caFile, certificateFile, privateKeyFile, dbAuthMechanism, replication)
+	db, session := connectDatabase()
 	if db != nil && session != nil {
 		mongoDBStore = new(MongoDBStore)
-		mongoDBStore.Db = db
-		mongoDBStore.Session = session
+		mongoDBStore.Database = db
+		mongoDBStore.Client = session
 		return mongoDBStore
 	}
-	log.Fatal("Datastore not create")
+	ErrLog.Fatal("Datastore not create")
 	return nil
 }
 
-func connectMongoDatabase(caFile string, certificateFile string, privateKeyFile string, dbAuthMechanism string, replication string) (*mongo.Database, *mongo.Client) {
+func connectDatabase() (*mongo.Database, *mongo.Client) {
 	var connectOne sync.Once
 	var db *mongo.Database
 	var session *mongo.Client
 	var err error
 	connectOne.Do(func() {
-		opt := configureConnectionInformation(caFile, certificateFile, privateKeyFile, dbAuthMechanism, replication)
-		session, err = mongo.Connect(context.TODO(), opt)
+		opt := configureConnectionInformation()
+		session, err = mongo.NewClient(opt)
 		if err != nil {
-			ErrLog.Fatal(err)
+			ErrLog.Fatal(err, "client err")
+
 		}
+
+		err = session.Connect(context.TODO())
+		//err = session.Ping(context.TODO(), nil)
+		//log.Print(err)
+		if err != nil {
+			ErrLog.Fatal("connect err")
+		}
+
 		err = session.Ping(context.TODO(), nil)
+		ErrLog.Print(err)
 		db = session.Database(DBMongoName)
 	})
 
 	return db, session
 }
 
-func configureConnectionInformation(caFile string, certificateFile string, privateKeyFile string, dbAuthMechanism string, relication string) *options.ClientOptions {
+func configureConnectionInformation() *options.ClientOptions {
 	if runtime.GOOS == "windows" {
 		opt := options.Client().
 			ApplyURI("mongodb://" + DBMongoHostPort).
 			SetConnectTimeout(10 * time.Second)
 		return opt
 	}
-	cer, err := tls.LoadX509KeyPair(certificateFile, privateKeyFile)
+	cer, err := tls.LoadX509KeyPair(DBMongoCertificateFile, DBMongoPrivateKeyFile)
 	if err != nil {
-		ErrLog.Fatal(err)
+		ErrLog.Fatal(DBMongoCertificateFile, "34234")
 	}
-	certs, err := os.ReadFile(caFile)
+	certs, err := ioutil.ReadFile(DBMongoCertificateFile)
 	if err != nil {
 		ErrLog.Fatal(err)
 	}
 	rootCAs, err := x509.SystemCertPool()
 	if err != nil {
-		log.Fatal(err)
+		ErrLog.Fatal(err)
 	}
 	if rootCAs == nil {
 		rootCAs = x509.NewCertPool()
+
 	}
 	if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
-		log.Fatal("No certs appended, using system certs only")
+		ErrLog.Fatal("No certs appended, using system certs only")
 
 	}
 	config := &tls.Config{
@@ -82,19 +91,21 @@ func configureConnectionInformation(caFile string, certificateFile string, priva
 		RootCAs:      rootCAs,
 	}
 	cert := options.Credential{
-		AuthMechanism: dbAuthMechanism,
-		Username:      DBMongoName,
+		AuthMechanism: DBMongoAuthMechanism,
+		//AuthSource: "$external",
+		Username: DBMongoName,
 	}
-	rp, err := readpref.New(readpref.PrimaryMode)
-	if err != nil {
-		log.Print(err)
-	}
+	//rp,err:= readpref.New(readpref.PrimaryMode)
+	//if err != nil{
+	//	log.Print(err)
+	//}
 	opt := options.Client().
 		ApplyURI("mongodb://" + DBMongoHostPort).
 		SetTLSConfig(config).
 		SetAuth(cert).SetMaxPoolSize(10).
 		SetConnectTimeout(10 * time.Second).
-		SetReplicaSet(relication).
-		SetReadPreference(rp)
+		SetReplicaSet(DBMongoReplication)
+	//SetReadPreference(rp)
 	return opt
+
 }

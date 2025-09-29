@@ -17,7 +17,7 @@ type tokenRepositoryIml struct {
 
 func NewTokenRepository(db *infrastructure.MongoDBStore, collection string) database.TokenRepository {
 	return &tokenRepositoryIml{
-		collection: db.Db.Collection(collection),
+		collection: db.Database.Collection(collection),
 	}
 }
 

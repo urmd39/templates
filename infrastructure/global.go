@@ -11,6 +11,7 @@ import (
 var (
 	NATSConnection EventPublisher
 	VNLocation     *time.Location
+	DB             *MongoDBStore
 )
 
 func init() {
@@ -33,4 +34,5 @@ func init() {
 	authenClientID := "authen-service-" + guuid.New().String()
 	NATSConnection = NewNatsPublisher(NATSHostport, NATSClusterID, authenClientID)
 	DOSpaceConn = setupDOSpaceConnection()
+	DB = NewDBStore()
 }

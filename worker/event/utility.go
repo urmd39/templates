@@ -23,11 +23,11 @@ func convertData(input interface{}, ouput interface{}) error {
 type Action interface {
 	create(objectCreate interface{}) (err error)
 	update(objectUpdate interface{}, code string) (err error)
-	updateStatus(objectUpdate interface{}, code string) (err error)
 	GetSubject() string
 	GetGroupName() string
 	GetDurableName() string
 	Callback(m *stan.Msg)
+	Consume()
 }
 
 type ConfigSyn struct {
